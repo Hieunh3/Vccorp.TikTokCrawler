@@ -46,8 +46,10 @@ namespace VCCorp.TikTokCrawler.Controller
             ushort indexLastContent = 0;
             try
             {
-                await _browser.LoadUrlAsync(url);
-                await Task.Delay(20_000);
+                ////Không login thì mở 2 dòng này
+                //await _browser.LoadUrlAsync(url);
+                //await Task.Delay(20_000);
+
                 byte i = 0;
                 while (i < 20)
                 {
@@ -70,7 +72,6 @@ namespace VCCorp.TikTokCrawler.Controller
 
                             TikTokDTO content = new TikTokDTO();
                             content.link = urlVid;
-                            content.domain = URL_VINAMILK;
                             content.post_id = idVid;
                             DateTime createDate = DateTime.Now;
                             string postDate = item.SelectSingleNode(".//div[contains(@class,'tiktok-842lvj-DivTimeTag')]")?.InnerText;
@@ -94,13 +95,15 @@ namespace VCCorp.TikTokCrawler.Controller
                             tiktokPost.Add(content);
 
                             //Lấy vid từ tháng 11
-                            if (createDate > DateTime.Now.AddDays(-37))
+                            if (createDate > DateTime.Now.AddDays(-39))
                             {
                                 //lưu vào db si_demand_source
                                 TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
                                 await msql.InserToSiPostTable(content);
+
+                                ////Bảng test local
                                 //TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableLinkProduct);
-                                //await msql.InserTikTokUrlTable(content);
+                                //await msql.InserTikTokSourcePostTable(content);
                                 msql.Dispose();
 
                                 #region gửi đi cho ILS
@@ -144,7 +147,7 @@ namespace VCCorp.TikTokCrawler.Controller
                             indexLastContent++;
                         }
                     }
-                    //check JS roll xuống cuối trang
+                    //check JS nút xem thêm
                     string checkJs = await Common.Utilities.EvaluateJavaScriptSync(_jsLoadMore, _browser).ConfigureAwait(false);
                     if (checkJs == null)
                     {

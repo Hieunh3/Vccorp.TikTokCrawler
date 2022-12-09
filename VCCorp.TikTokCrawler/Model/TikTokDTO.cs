@@ -17,6 +17,7 @@ namespace VCCorp.TikTokCrawler.Model
         public DateTime crawled_time { get; set; }
         public int status { get;set; }
         public string domain { get; set; }
+        public int status_link { get; set; }
 
         public TikTokDTO(string post_id, DateTime create_time)
         {

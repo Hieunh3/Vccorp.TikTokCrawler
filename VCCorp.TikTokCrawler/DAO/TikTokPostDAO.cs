@@ -41,66 +41,7 @@ namespace VCCorp.TikTokCrawler.DAO
         }
 
         /// <summary>
-        /// Insert Content
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        public async Task<int> InserToTikTokPostTable(Tiktok_Post_Kafka_Model content)
-        {
-            int res = 0;
-
-            try
-            {
-                await _conn.OpenAsync();
-
-                string query = "insert ignore into example.tiktok_post " +
-                    "(IdVideo,Username,IdUser,UrlUser,Avatar,Content,LinkVideo,PlayCounts,TimePost,TimePostTimeStamp,TimeCreated,TimeCreateTimeStamp,Followers,Following) " +
-                    "values (@IdVideo,@Username,@IdUser,@UrlUser,@Avatar,@Content,@LinkVideo,@PlayCounts,@TimePost,@TimePostTimeStamp,@TimeCreated,@TimeCreateTimeStamp,@Followers,@Following)";
-
-                MySqlCommand cmd = new MySqlCommand();
-                cmd.Connection = _conn;
-                cmd.CommandText = query;
-
-                cmd.Parameters.AddWithValue("@IdVideo", content.IdVideo);
-                cmd.Parameters.AddWithValue("@Username", content.UserName);
-                cmd.Parameters.AddWithValue("@IdUser", content.IdUser);
-                cmd.Parameters.AddWithValue("@UrlUser", content.UrlUser);
-                cmd.Parameters.AddWithValue("@Avatar", content.Avatar);
-                cmd.Parameters.AddWithValue("@Content", content.Content);
-                cmd.Parameters.AddWithValue("@LinkVideo", content.LinkVideo);
-                cmd.Parameters.AddWithValue("@PlayCounts", content.PlayCounts);
-                cmd.Parameters.AddWithValue("@TimePost", content.TimePost);
-                cmd.Parameters.AddWithValue("@TimePostTimeStamp", content.TimePostTimeStamp);
-                cmd.Parameters.AddWithValue("@TimeCreated", content.TimeCreated);
-                cmd.Parameters.AddWithValue("@TimeCreateTimeStamp", content.TimeCreateTimeStamp);
-                cmd.Parameters.AddWithValue("@Followers", content.Followers);
-                cmd.Parameters.AddWithValue("@Following", content.Following);
-
-                await cmd.ExecuteNonQueryAsync();
-
-                res = 1;
-
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.ToLower().Contains("duplicate entry"))
-                {
-                    res = -2; // trùng link
-                }
-                else
-                {
-                    res = -1; // lỗi, bắt lỗi trả ra để sửa
-
-                    // ghi lỗi xuống fil
-                }
-            }
-
-            return res;
-        }
-
-
-        /// <summary>
-        /// Insert Content to si_demand_resource_post table
+        /// Insert Content to si_demand_resource_post table (bảng chính)
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
@@ -151,7 +92,7 @@ namespace VCCorp.TikTokCrawler.DAO
             return res;
         }
         /// <summary>
-        /// Insert Content to tiktok_link table
+        /// Insert Content to tiktok_link table (bảng local để lưu Link)
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
@@ -164,8 +105,8 @@ namespace VCCorp.TikTokCrawler.DAO
                 await _conn.OpenAsync();
 
                 string query = "insert ignore example.tiktok_link " +
-                    "(post_id,link,domain) " +
-                    "values (@post_id,@link,@domain)";
+                    "(post_id,link,domain,status) " +
+                    "values (@post_id,@link,@domain,@status)";
 
                 MySqlCommand cmd = new MySqlCommand();
                 cmd.Connection = _conn;
@@ -174,6 +115,7 @@ namespace VCCorp.TikTokCrawler.DAO
                 cmd.Parameters.AddWithValue("@post_id", content.post_id);
                 cmd.Parameters.AddWithValue("@link", content.link);
                 cmd.Parameters.AddWithValue("@domain", content.domain);
+                cmd.Parameters.AddWithValue("@status", content.status_link);
 
                 await cmd.ExecuteNonQueryAsync();
 
@@ -198,11 +140,11 @@ namespace VCCorp.TikTokCrawler.DAO
         }
 
         /// <summary>
-        /// Insert Content to tiktok_url table
+        /// Insert Content to tiktok_source_post table (bảng local để test)
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        public async Task<int> InserTikTokUrlTable(TikTokDTO content)
+        public async Task<int> InserTikTokSourcePostTable(TikTokDTO content)
         {
             int res = 0;
 
@@ -210,7 +152,7 @@ namespace VCCorp.TikTokCrawler.DAO
             {
                 await _conn.OpenAsync();
 
-                string query = "insert ignore example.tiktok_url " +
+                string query = "insert ignore example.tiktok_source_post " +
                     "(post_id,platform,link,create_time,update_time,crawled_time,domain) " +
                     "values (@post_id,@platform,@link,@create_time,@update_time,@crawled_time,@domain)";
 
@@ -226,11 +168,9 @@ namespace VCCorp.TikTokCrawler.DAO
                 cmd.Parameters.AddWithValue("@crawled_time", content.crawled_time);
                 cmd.Parameters.AddWithValue("@domain", content.domain);
 
-
                 await cmd.ExecuteNonQueryAsync();
 
                 res = 1;
-
             }
             catch (Exception ex)
             {
@@ -245,13 +185,11 @@ namespace VCCorp.TikTokCrawler.DAO
                     // ghi lỗi xuống fil
                 }
             }
-
             return res;
         }
 
-
         /// <summary>
-        /// Select URL from tiktok_url table
+        /// Select URL from tiktok_link table để bóc
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
@@ -271,6 +209,7 @@ namespace VCCorp.TikTokCrawler.DAO
                             data.Add(new TikTokDTO
                             {
                                 link = reader["link"].ToString(),
+                                status_link = (int)reader["status"],
                             }
                             );
                         }
@@ -289,7 +228,7 @@ namespace VCCorp.TikTokCrawler.DAO
         public async Task TruncateLink_Db()
         {
             await _conn.OpenAsync();
-            string query = "TRUNCATE TABLE example.tiktok_link";
+            string query = $"TRUNCATE TABLE example.tiktok_link";
             try
             {
                 MySqlCommand cmd = new MySqlCommand(query, _conn);
@@ -305,7 +244,47 @@ namespace VCCorp.TikTokCrawler.DAO
 
         }
 
-       
+        /// <summary>
+        /// Update status
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public async Task<int> UpdateStatus(string link)
+        {
+            TikTokDTO content = new TikTokDTO();
+            int res = 0;
+            try
+            {
+                await _conn.OpenAsync();
+
+                string query = $"UPDATE example.tiktok_link SET status = 1 WHERE link = '{link}'";
+
+                MySqlCommand cmd = new MySqlCommand();
+                cmd.Connection = _conn;
+                cmd.CommandText = query;
+                cmd.Parameters.AddWithValue("@status", content.status_link);
+                await cmd.ExecuteNonQueryAsync();
+
+                res = 1;
+
+
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.ToLower().Contains("duplicate entry"))
+                {
+                    res = -2; // trùng link
+                }
+                else
+                {
+                    res = -1; // lỗi, bắt lỗi trả ra để sửa
+
+                    // ghi lỗi xuống fil
+                }
+            }
+            return res;
+        }
+
 
     }
 }
