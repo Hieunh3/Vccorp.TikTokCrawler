@@ -126,7 +126,7 @@
     <Compile Include="Common\Config_System.cs" />
     <Compile Include="Common\DateTimeFormatAgain.cs" />
     <Compile Include="Common\Date_Helper.cs" />
-    <Compile Include="Common\Extensions.cs" />
+    <Compile Include="Common\Hastag_Helper.cs" />
     <Compile Include="Common\Kafka_Helper.cs" />
     <Compile Include="Common\Utilities.cs" />
     <Compile Include="Controller\TikTokHashTagController.cs" />

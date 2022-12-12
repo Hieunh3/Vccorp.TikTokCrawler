@@ -228,7 +228,7 @@ namespace VCCorp.TikTokCrawler.DAO
         public async Task TruncateLink_Db()
         {
             await _conn.OpenAsync();
-            string query = $"TRUNCATE TABLE example.tiktok_link";
+            string query = "TRUNCATE TABLE example.tiktok_link";
             try
             {
                 MySqlCommand cmd = new MySqlCommand(query, _conn);
@@ -283,6 +283,40 @@ namespace VCCorp.TikTokCrawler.DAO
                 }
             }
             return res;
+        }
+
+        /// <summary>
+        /// Select hashtag from si_hashtag table between from date to date
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public List<string> GetHashtagInTableSiHastag(string fromDate,string toDate)
+        {
+            List<string> data = new List<string>();
+            string query = $"Select * from social_index_v2.si_hashtag WHERE create_time BETWEEN '{fromDate}' AND '{toDate}' ";
+            try
+            {
+                using (MySqlCommand cmd = new MySqlCommand(query, _conn))
+                {
+                    _conn.Open();
+                    using (DbDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            data.Add(reader["hashtag"].ToString());
+                            
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            _conn.Close();
+
+            return data;
         }
 
 

@@ -27,5 +27,7 @@ namespace VCCorp.TikTokCrawler.Model
         public TikTokDTO()
         {
         }
+        
+        public string hashtag { get; set; }
     }
 }
