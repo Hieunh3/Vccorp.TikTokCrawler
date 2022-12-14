@@ -48,12 +48,9 @@ namespace VCCorp.TikTokCrawler
         private async void button1_Click_1(object sender, EventArgs e)
         {
             try
-            {
-                InitBrowser("https://www.tiktok.com/");
-                await Task.Delay(10_000);
+            {             
                 TikTokHashTagController tiktokPostController = new TikTokHashTagController(_browser);
                 await tiktokPostController.CrawlData();
-
             }
             catch (Exception)
             {

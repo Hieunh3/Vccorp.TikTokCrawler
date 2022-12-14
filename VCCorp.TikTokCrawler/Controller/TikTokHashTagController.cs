@@ -129,15 +129,15 @@ namespace VCCorp.TikTokCrawler.Controller
                             tiktokPost.Add(content);
 
                             //Lấy vid từ tháng 11
-                            if (createDate > DateTime.Now.AddDays(-42))
+                            if (createDate > DateTime.Now.AddDays(-44))
                             {
                                 //lưu vào db si_demand_source
-                                //TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
-                                //await msql.InserToSiPostTable(content);
+                                TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
+                                await msql.InserToSiPostTable(content);
 
-                                //Bảng test local
-                                TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableLinkProduct);
-                                await msql.InserTikTokSourcePostTable(content);
+                                ////Bảng test local
+                                //TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableLinkProduct);
+                                //await msql.InserTikTokSourcePostTable(content);
                                 msql.Dispose();
 
                                 #region gửi đi cho ILS
@@ -176,7 +176,7 @@ namespace VCCorp.TikTokCrawler.Controller
 
                                 string jsonPost = ToJson<Tiktok_Post_Kafka_Model>(kafka);
                                 Kafka_Helper kh = new Kafka_Helper();
-                                //await kh.InsertPost(jsonPost, "crawler-data-tiktok");
+                                await kh.InsertPost(jsonPost, "crawler-data-tiktok");
                                 #endregion
                             }
 
