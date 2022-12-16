@@ -18,7 +18,7 @@ namespace VCCorp.TikTokCrawler.Model
         public int status { get;set; }
         public string domain { get; set; }
         public int status_link { get; set; }
-
+        public int total_comment { get; set; }
         public TikTokDTO(string post_id, DateTime create_time)
         {
             this.post_id = post_id;

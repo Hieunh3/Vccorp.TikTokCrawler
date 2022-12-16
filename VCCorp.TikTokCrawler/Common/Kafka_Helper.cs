@@ -47,5 +47,16 @@ namespace VCCorp.TikTokCrawler.Common
 
             return false;
         }
+        public static string ToJson<T>(T obj)
+        {
+            try
+            {
+                return System.Text.Json.JsonSerializer.Serialize<T>(obj);
+            }
+            catch (Exception)
+            {
+                return default;
+            }
+        }
     }
 }

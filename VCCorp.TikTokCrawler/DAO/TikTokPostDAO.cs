@@ -54,8 +54,8 @@ namespace VCCorp.TikTokCrawler.DAO
                 await _conn.OpenAsync();
 
                 string query = "insert ignore social_index_v2.si_demand_source_post " +
-                    "(post_id,platform,link,create_time,update_time,crawled_time,status) " +
-                    "values (@post_id,@platform,@link,@create_time,@update_time,@crawled_time,@status)";
+                    "(post_id,platform,link,create_time,update_time,crawled_time,status,total_comment) " +
+                    "values (@post_id,@platform,@link,@create_time,@update_time,@crawled_time,@status,@total_comment)";
 
                 MySqlCommand cmd = new MySqlCommand();
                 cmd.Connection = _conn;
@@ -68,6 +68,7 @@ namespace VCCorp.TikTokCrawler.DAO
                 cmd.Parameters.AddWithValue("@update_time", content.update_time);
                 cmd.Parameters.AddWithValue("@crawled_time", content.crawled_time);
                 cmd.Parameters.AddWithValue("@status", content.status);
+                cmd.Parameters.AddWithValue("@total_comment", content.total_comment);
 
 
                 await cmd.ExecuteNonQueryAsync();

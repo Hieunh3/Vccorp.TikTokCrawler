@@ -39,7 +39,7 @@ namespace VCCorp.TikTokCrawler.Controller
         public async Task GetHashtag()
         {
             TikTokPostDAO sql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
-            DateTime fromDate = DateTime.Now.AddDays(-7);
+            DateTime fromDate = DateTime.Now.AddDays(-3);
             DateTime toDate = DateTime.Now;
 
             //Lấy hashtag từ db trong 7 ngày
@@ -80,7 +80,6 @@ namespace VCCorp.TikTokCrawler.Controller
             ushort indexLastContent = 0;
             try
             {
-                //Không login thì mở 2 dòng này. Login thì đóng lại.
                 await _browser.LoadUrlAsync(url);
                 await Task.Delay(20_000);
 
@@ -100,7 +99,14 @@ namespace VCCorp.TikTokCrawler.Controller
                     if (divComment != null)
                     {
                         foreach (HtmlNode item in divComment)
-                        {
+                        {   
+                            //tối ưu playCount về dạng int
+                            string numString = item.SelectSingleNode(".//strong[contains(@class,'tiktok-ws4x78-StrongVideoCount')]")?.InnerText;
+                            string getChar = Regex.Match(numString, @"\D$").Value;// tách lấy chữ (ví dụ 10K,10M... thì lấy K, M)
+                            string getFullNumAndChar = Regex.Match(numString, @".*\d+").Value;//tách lấy số và kí tự (dấu chấm)
+                            string getOnlyNum = getFullNumAndChar.Replace(".", string.Empty).ToLower();//loại bỏ dấu chấm chỉ lấy số (ví dụ 21.9)
+                            int convertNum = int.Parse(getOnlyNum.ToString());//convert sang int
+
                             string urlVid = item.SelectSingleNode(".//div[contains(@class,'tiktok-yz6ijl-DivWrapper')]/a")?.Attributes["href"].Value;
                             string idVid = Regex.Match(urlVid, @"(?<=/video/)\d+").Value; // lấy id_post
 
@@ -125,11 +131,11 @@ namespace VCCorp.TikTokCrawler.Controller
                             content.crawled_time = DateTime.Now; // thời gian bóc
                             content.update_time = createDate; // thời gian update
                             content.status = Common.Config_System.Status;
-
+                            content.total_comment = ConvertPlayCount(getChar, convertNum);//play count
                             tiktokPost.Add(content);
 
                             //Lấy vid từ tháng 11
-                            if (createDate > DateTime.Now.AddDays(-44))
+                            if (createDate > DateTime.Now.AddDays(-46))
                             {
                                 //lưu vào db si_demand_source
                                 TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
@@ -149,32 +155,13 @@ namespace VCCorp.TikTokCrawler.Controller
                                 kafka.Avatar = item.SelectSingleNode(".//span[contains(@class,'tiktok-tuohvl-SpanAvatarContainer')]//img")?.Attributes["src"]?.Value ?? "";
                                 kafka.Content = Common.Utilities.RemoveSpecialCharacter(item.SelectSingleNode(".//div[contains(@class,'tiktok-1ejylhp-DivContainer')]/span[contains(@class,'tiktok-j2a19r-SpanText')][1]")?.InnerText);
                                 kafka.LinkVideo = urlVid;
-
-                                //tối ưu playCount về dạng int
-                                string numString = item.SelectSingleNode(".//strong[contains(@class,'tiktok-ws4x78-StrongVideoCount')]")?.InnerText;
-                                string getChar = Regex.Match(numString, @"\D$").Value;// tách lấy chữ (ví dụ 10K,10M... thì lấy K, M)
-                                string getFullNumAndChar = Regex.Match(numString, @".*\d+").Value;//tách lấy số và kí tự (dấu chấm)
-                                string getOnlyNum = getFullNumAndChar.Replace(".", string.Empty).ToLower();//loại bỏ dấu chấm chỉ lấy số ví dụ 21.9
-                                int convertNum = int.Parse(getOnlyNum.ToString());//convert sang int
-
-                                if (getChar == "K")
-                                {
-                                    kafka.PlayCounts = convertNum * 100;
-                                }
-                                else if (getChar == "M")
-                                {
-                                    kafka.PlayCounts = convertNum * 100000;
-                                }
-                                else if (getChar == "")
-                                {
-                                    kafka.PlayCounts = convertNum;
-                                }
+                                kafka.PlayCounts = ConvertPlayCount(getChar, convertNum);
                                 kafka.TimePost = createDate;
                                 kafka.TimePostTimeStamp = (double)(Date_Helper.ConvertDateTimeToTimeStamp(createDate));
                                 kafka.TimeCreated = DateTime.Now;
                                 kafka.TimeCreateTimeStamp = (double)(Date_Helper.ConvertDateTimeToTimeStamp(DateTime.Now));
 
-                                string jsonPost = ToJson<Tiktok_Post_Kafka_Model>(kafka);
+                                string jsonPost = Kafka_Helper.ToJson<Tiktok_Post_Kafka_Model>(kafka);
                                 Kafka_Helper kh = new Kafka_Helper();
                                 await kh.InsertPost(jsonPost, "crawler-data-tiktok");
                                 #endregion
@@ -196,16 +183,23 @@ namespace VCCorp.TikTokCrawler.Controller
             return tiktokPost;
         }
 
-        public string ToJson<T>(T obj)
+        //convert play count về dạng int
+        public int ConvertPlayCount(string specChar, int playCount)
         {
-            try
+            if (specChar == "K")
             {
-                return System.Text.Json.JsonSerializer.Serialize<T>(obj);
+                return playCount * 100;
             }
-            catch (Exception)
+            else if (specChar == "M")
             {
-                return default;
+                return playCount * 100000;
             }
+            else if (specChar == "")
+            {
+                return playCount;
+            }
+            return playCount;
         }
+        
     }
 }
