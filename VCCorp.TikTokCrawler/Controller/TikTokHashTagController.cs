@@ -28,7 +28,7 @@ namespace VCCorp.TikTokCrawler.Controller
         public async Task CrawlData()
         {
             await GetHashtag();
-
+            //await CrawlHashtag("https://www.tiktok.com/search?q=xuhuong");
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace VCCorp.TikTokCrawler.Controller
                 await Task.Delay(20_000);
 
                 byte i = 0;
-                while (i < 20)
+                while (i < 100)
                 {
                     i++;
                     string html = await Common.Utilities.GetBrowserSource(_browser).ConfigureAwait(false);
@@ -135,7 +135,7 @@ namespace VCCorp.TikTokCrawler.Controller
                             tiktokPost.Add(content);
 
                             //Lấy vid từ tháng 11
-                            if (createDate > DateTime.Now.AddDays(-46))
+                            if (createDate > DateTime.Now.AddDays(-31))
                             {
                                 //lưu vào db si_demand_source
                                 TikTokPostDAO msql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
@@ -180,7 +180,7 @@ namespace VCCorp.TikTokCrawler.Controller
                 }
             }
             catch { }
-            return tiktokPost;
+             return tiktokPost;
         }
 
         //convert play count về dạng int
