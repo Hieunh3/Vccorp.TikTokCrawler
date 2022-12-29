@@ -2,7 +2,9 @@
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VCCorp.TikTokCrawler.Common;
@@ -15,10 +17,10 @@ namespace VCCorp.TikTokCrawler.Controller
     {
         private ChromiumWebBrowser _browser = null;
         private readonly HtmlAgilityPack.HtmlDocument _document = new HtmlAgilityPack.HtmlDocument();
-        private string URL_VINAMILK = "https://www.tiktok.com/search?q=vinamilk";
         private string URL_TIKTOK = "https://www.tiktok.com/";
         private const string _jsAutoScroll = @"window.scrollTo(0, document.body.scrollHeight)/3";
         private const string _jsLoadMore = @"document.getElementsByClassName('tiktok-154bc22-ButtonMore')[0].click()";
+        private string path = "D:\\ListHashTag.txt";
 
         public TikTokHashTagController(ChromiumWebBrowser browser)
         {
@@ -26,9 +28,31 @@ namespace VCCorp.TikTokCrawler.Controller
         }
 
         public async Task CrawlData()
+        {   
+            //import url từ db theo days
+            //await GetHashtag();
+
+            //import cứng URL
+            //await CrawlHashtag("https://www.tiktok.com/search?q=Entertainment");
+
+            //import url từ file txt
+            await GetHashTagFromFile();
+        }
+
+        /// <summary>
+        /// Lấy HashTag từ file txt
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public async Task GetHashTagFromFile()
         {
-            await GetHashtag();
-            //await CrawlHashtag("https://www.tiktok.com/search?q=xuhuong");
+            string[] lines = File.ReadAllLines(path);//đọc các dòng trong file .txt
+            foreach( string line in lines)
+            {
+                TikTokDTO getTextFile = new TikTokDTO(line);//lấy object trong file .txt
+                string url = getTextFile.hashtag;
+                await CrawlHashtag("https://www.tiktok.com/search?q="+url);
+            }
         }
 
         /// <summary>
@@ -39,14 +63,19 @@ namespace VCCorp.TikTokCrawler.Controller
         public async Task GetHashtag()
         {
             TikTokPostDAO sql = new TikTokPostDAO(ConnectionDAO.ConnectionToTableSiPost);
-            DateTime fromDate = DateTime.Now.AddDays(-3);
+            DateTime fromDate = DateTime.Now.AddDays(-2);
             DateTime toDate = DateTime.Now;
+            DateTime currentDate = DateTime.Now.AddDays(-1);
 
-            //Lấy hashtag từ db trong 7 ngày
-            List<string> lstHashtag = sql.GetHashtagInTableSiHastag(fromDate.ToString("yyyy-MM-dd"), toDate.ToString("yyyy-MM-dd"));
+            //Lấy hashtag từ db trong khoảng date
+            //List<string> lstHashtag = sql.GetHashtagInTableSiHastag(fromDate.ToString("yyyy-MM-dd"), toDate.ToString("yyyy-MM-dd"));
+
+            //Lấy hastag từ db trong chính xác 1 ngày
+            List<string> lstHashtag = sql.GetHashtagInTableSiHastagByCurrentDate(currentDate.ToString("yyyy-MM-dd"));
             sql.Dispose();
+
             List<string> lstDuplicate = new List<string>();//list trùng
-            List<string> lstCheckDuplicate = new List<string>();//list không trùng
+            List<string> lstCheckDuplicate = new List<string>();//list không trùng        
 
             for (int i = 0; i < lstHashtag.Count; i++)
             {

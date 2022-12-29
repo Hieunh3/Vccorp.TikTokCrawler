@@ -19,15 +19,18 @@ namespace VCCorp.TikTokCrawler.Model
         public string domain { get; set; }
         public int status_link { get; set; }
         public int total_comment { get; set; }
+        public string hashtag { get; set; }
         public TikTokDTO(string post_id, DateTime create_time)
         {
             this.post_id = post_id;
             this.create_time = create_time;
         }
-        public TikTokDTO()
+        public TikTokDTO(string hashTagFile)
         {
+            this.hashtag = hashTagFile;
         }
+        public TikTokDTO()
+        { }        
         
-        public string hashtag { get; set; }
     }
 }

@@ -320,6 +320,39 @@ namespace VCCorp.TikTokCrawler.DAO
             return data;
         }
 
+        /// <summary>
+        /// Select hashtag from si_hashtag table by current date
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public List<string> GetHashtagInTableSiHastagByCurrentDate(string datetime)
+        {
+            List<string> data = new List<string>();
+            string query = $"Select * from social_index_v2.si_hashtag WHERE create_time LIKE '%{datetime}%' ";
+            try
+            {
+                using (MySqlCommand cmd = new MySqlCommand(query, _conn))
+                {
+                    _conn.Open();
+                    using (DbDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            data.Add(reader["hashtag"].ToString());
+
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            _conn.Close();
+
+            return data;
+        }
 
     }
 }
